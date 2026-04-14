@@ -8,8 +8,13 @@ import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
 
-const ytDlpPath = join(process.cwd(), "bin", "yt-dlp.exe");
-const ffmpegPath = join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg.exe");
+const isWindows = process.platform === "win32";
+const ytDlpPath = isWindows
+  ? join(process.cwd(), "bin", "yt-dlp.exe")
+  : "/usr/local/bin/yt-dlp";
+const ffmpegPath = isWindows
+  ? join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg.exe")
+  : "/usr/bin/ffmpeg";
 
 export async function GET(request: NextRequest) {
   const videoId = request.nextUrl.searchParams.get("id");
