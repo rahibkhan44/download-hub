@@ -45,3 +45,4 @@ bin/
 .vs/
 src/.vs/
 test-download.mjs
+.vercel

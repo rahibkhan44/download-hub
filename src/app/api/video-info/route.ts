@@ -50,18 +50,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       id: videoDetails.id,
       title: videoDetails.title,
-      description: videoDetails.short_description,
-      thumbnail: videoDetails.thumbnail?.[0]?.url,
+      thumbnail:
+        videoDetails.thumbnail?.[0]?.url ??
+        `https://i.ytimg.com/vi/${videoDetails.id}/hqdefault.jpg`,
       duration: videoDetails.duration,
-      author: videoDetails.author,
-      viewCount: videoDetails.view_count,
-      channelId: videoDetails.channel_id,
+      author: videoDetails.author ?? "Unknown",
       formats,
     });
   } catch (error) {
-    console.error("Error fetching video info:", error);
+    console.error("Video info error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch video information. Please check the URL." },
+      { error: "Failed to fetch video info" },
       { status: 500 }
     );
   }

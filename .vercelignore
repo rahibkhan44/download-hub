@@ -1,0 +1,4 @@
+.vs
+src/.vs
+bin
+test-download.mjs
