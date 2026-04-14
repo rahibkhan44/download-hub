@@ -40,31 +40,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Add adaptive video-only formats (will be merged with audio via ffmpeg on download)
-    if (info.streaming_data?.adaptive_formats) {
-      const seen = new Set<string>();
-      const videoOnlyFormats = info.streaming_data.adaptive_formats
-        .filter((f) => f.has_video && !f.has_audio && f.mime_type.includes("mp4"))
-        .sort((a, b) => (b.bitrate ?? 0) - (a.bitrate ?? 0));
-
-      for (const f of videoOnlyFormats) {
-        const label = f.quality_label ?? `${f.height}p`;
-        // Only keep the best bitrate for each quality label
-        if (seen.has(label)) continue;
-        seen.add(label);
-        formats.push({
-          itag: f.itag,
-          qualityLabel: label,
-          mimeType: "video/mp4",
-          hasAudio: true, // will have audio after ffmpeg merge
-          hasVideo: true,
-          contentLength: f.content_length?.toString() ?? "0",
-          bitrate: f.bitrate ?? 0,
-        });
-      }
-    }
-
-    // Sort by resolution (extract number from label) descending
+    // Sort by resolution descending
     formats.sort((a, b) => {
       const aRes = parseInt(a.qualityLabel) || 0;
       const bRes = parseInt(b.qualityLabel) || 0;
