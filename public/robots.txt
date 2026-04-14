@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://yt-downloader-livid-xi.vercel.app/sitemap.xml
