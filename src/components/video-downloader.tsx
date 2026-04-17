@@ -213,6 +213,7 @@ export default function VideoDownloader() {
     setTimeout(() => setTiktokDownloading(false), 8000);
   };
 
+
   const handleDownload = (videoId: string, itag: number) => {
     setDownloadingItag(itag);
     const link = document.createElement("a");
@@ -694,16 +695,20 @@ export default function VideoDownloader() {
           )}
 
           {/* Empty State */}
-          {!videoInfo && !playlistInfo && !tiktokInfo && !loading && !error && (
-            <div className="text-center py-12 text-neutral-600">
-              <CirclePlay className="h-14 w-14 mx-auto mb-3 opacity-20" />
-              <p className="text-base">
-                {activePlatform === "tiktok"
-                  ? "Paste a TikTok video URL above to get started"
-                  : "Paste a video or playlist URL above to get started"}
-              </p>
-            </div>
-          )}
+          {!videoInfo &&
+            !playlistInfo &&
+            !tiktokInfo &&
+            !loading &&
+            !error && (
+              <div className="text-center py-12 text-neutral-600">
+                <CirclePlay className="h-14 w-14 mx-auto mb-3 opacity-20" />
+                <p className="text-base">
+                  {activePlatform === "tiktok"
+                    ? "Paste a TikTok video URL above to get started"
+                    : "Paste a video or playlist URL above to get started"}
+                </p>
+              </div>
+            )}
         </section>
 
         {/* Supported Platforms Banner */}
@@ -798,8 +803,8 @@ export default function VideoDownloader() {
                 a: "No installation required. DownloadHub works entirely in your browser on any device.",
               },
               {
-                q: "Will Facebook, Instagram & TikTok be supported?",
-                a: "Yes! Support for Facebook, Instagram, and TikTok downloads is coming very soon.",
+                q: "Which platforms are supported?",
+                a: "YouTube (including playlists) and TikTok (no-watermark) are fully supported. Facebook and Instagram support is coming soon.",
               },
             ].map((item) => (
               <Card key={item.q} className="bg-neutral-900 border-neutral-800">
@@ -835,9 +840,9 @@ export default function VideoDownloader() {
               <h4 className="text-white font-semibold mb-3">Platforms</h4>
               <ul className="space-y-2 text-sm text-neutral-500">
                 <li><a href="#downloader" className="hover:text-white transition-colors">YouTube Downloader</a></li>
+                <li><a href="#downloader" className="hover:text-white transition-colors">TikTok Downloader</a></li>
                 <li className="text-neutral-600">Facebook Downloader (Soon)</li>
                 <li className="text-neutral-600">Instagram Downloader (Soon)</li>
-                <li className="text-neutral-600">TikTok Downloader (Soon)</li>
               </ul>
             </div>
 

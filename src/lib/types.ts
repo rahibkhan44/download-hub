@@ -48,3 +48,4 @@ export interface TikTokInfo {
   likeCount: number;
   playCount: number;
 }
+

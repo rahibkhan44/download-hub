@@ -33,10 +33,13 @@ export function parseYouTubeUrl(input: string): ParsedYouTubeUrl {
 }
 
 export function isTikTokUrl(input: string): boolean {
-  const trimmed = input.trim();
+  return matchesHostname(input, /(^|\.)tiktok\.com$/i);
+}
+
+function matchesHostname(input: string, re: RegExp): boolean {
   try {
-    const url = new URL(trimmed);
-    return /(^|\.)tiktok\.com$/i.test(url.hostname);
+    const url = new URL(input.trim());
+    return re.test(url.hostname);
   } catch {
     return false;
   }
