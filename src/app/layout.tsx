@@ -140,13 +140,13 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <head>
+      <body className="min-h-full flex flex-col">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-      </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+        {children}
+      </body>
     </html>
   );
 }
