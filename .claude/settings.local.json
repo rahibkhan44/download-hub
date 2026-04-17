@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm uninstall *)",
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)",
+      "Bash(npm run *)",
+      "Read(//c/Users/DELL/AppData/Local/Temp/claude/c--Users-DELL-source-repos-yt-downloader/5df7fb5a-fdd9-4f2f-945c-efa92e0b7742/tasks/**)",
+      "Bash(curl -s -o /tmp/video-info.json -w \"HTTP %{http_code}\\\\n\" \"http://localhost:3001/api/video-info?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DdQw4w9WgXcQ\")",
+      "Bash(curl -s -o /tmp/playlist-info.json -w \"HTTP %{http_code}\\\\n\" \"http://localhost:3001/api/playlist-info?url=https%3A%2F%2Fwww.youtube.com%2Fplaylist%3Flist%3DPLrAXtmErZgOeiKm4sgNOknGvNjby9efdf\")"
+    ]
+  }
+}

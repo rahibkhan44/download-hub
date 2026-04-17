@@ -1,4 +1,5 @@
 import { getInnertube } from "@/lib/youtube";
+import { parseYouTubeUrl } from "@/lib/url-parser";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -8,9 +9,23 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "URL is required" }, { status: 400 });
   }
 
+  let videoId: string;
+  try {
+    const parsed = parseYouTubeUrl(url);
+    if (parsed.type !== "video") {
+      return NextResponse.json(
+        { error: "URL is a playlist — use /api/playlist-info instead" },
+        { status: 400 }
+      );
+    }
+    videoId = parsed.videoId;
+  } catch {
+    return NextResponse.json({ error: "Invalid YouTube URL" }, { status: 400 });
+  }
+
   try {
     const yt = await getInnertube();
-    const info = await yt.getBasicInfo(extractVideoId(url));
+    const info = await yt.getBasicInfo(videoId);
 
     const videoDetails = info.basic_info;
 
@@ -55,6 +70,9 @@ export async function GET(request: NextRequest) {
         `https://i.ytimg.com/vi/${videoDetails.id}/hqdefault.jpg`,
       duration: videoDetails.duration,
       author: videoDetails.author ?? "Unknown",
+      viewCount: videoDetails.view_count ?? 0,
+      description: videoDetails.short_description ?? "",
+      channelId: videoDetails.channel_id ?? "",
       formats,
     });
   } catch (error) {
@@ -66,16 +84,3 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function extractVideoId(url: string): string {
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
-    /^([a-zA-Z0-9_-]{11})$/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
-  }
-
-  throw new Error("Invalid YouTube URL");
-}

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import Image from "next/image";
 import {
   Search,
   Download,
@@ -17,6 +18,12 @@ import {
   ListChecks,
   MousePointerClick,
   Mail,
+  ListVideo,
+  ArrowLeft,
+  PackageCheck,
+  StopCircle,
+  Heart,
+  Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,13 +31,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { VideoInfo, VideoFormat } from "@/lib/types";
+import type {
+  VideoInfo,
+  VideoFormat,
+  PlaylistInfo,
+  PlaylistVideoItem,
+  TikTokInfo,
+} from "@/lib/types";
 
 const PLATFORMS = [
   { id: "youtube", label: "YouTube", icon: CirclePlay, active: true },
+  { id: "tiktok", label: "TikTok", icon: Zap, active: true },
   { id: "facebook", label: "Facebook", icon: Video, active: false },
   { id: "instagram", label: "Instagram", icon: MonitorSmartphone, active: false },
-  { id: "tiktok", label: "TikTok", icon: Zap, active: false },
 ] as const;
 
 const FEATURES = [
@@ -106,31 +119,74 @@ function getMuxedFormats(formats: VideoFormat[]) {
     .sort((a, b) => b.bitrate - a.bitrate);
 }
 
+function isPlaylistUrl(url: string): boolean {
+  const trimmed = url.trim();
+  return (
+    /youtube\.com\/playlist\b/i.test(trimmed) ||
+    (/[?&]list=/i.test(trimmed) && !/[?&]v=/i.test(trimmed))
+  );
+}
+
 export default function VideoDownloader() {
   const [url, setUrl] = useState("");
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
+  const [playlistInfo, setPlaylistInfo] = useState<PlaylistInfo | null>(null);
+  const [tiktokInfo, setTiktokInfo] = useState<TikTokInfo | null>(null);
+  const [tiktokDownloading, setTiktokDownloading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [downloadingItag, setDownloadingItag] = useState<number | null>(null);
+  const [downloadingPlaylistId, setDownloadingPlaylistId] = useState<string | null>(null);
+  const [loadingVideoId, setLoadingVideoId] = useState<string | null>(null);
   const [activePlatform, setActivePlatform] = useState("youtube");
+  const [bulkProgress, setBulkProgress] = useState<{
+    current: number;
+    total: number;
+    title: string;
+    failed: number;
+  } | null>(null);
+  const bulkCancelRef = useRef(false);
+
+  const resetMedia = () => {
+    setVideoInfo(null);
+    setPlaylistInfo(null);
+    setTiktokInfo(null);
+  };
 
   const handleSearch = async () => {
-    if (!url.trim()) return;
+    const trimmed = url.trim();
+    if (!trimmed) return;
 
     setLoading(true);
     setError("");
-    setVideoInfo(null);
+    resetMedia();
+
+    let endpoint: string;
+    let targetKey: "video" | "playlist" | "tiktok";
+
+    if (activePlatform === "tiktok") {
+      endpoint = `/api/tiktok-info?url=${encodeURIComponent(trimmed)}`;
+      targetKey = "tiktok";
+    } else if (isPlaylistUrl(trimmed)) {
+      endpoint = `/api/playlist-info?url=${encodeURIComponent(trimmed)}`;
+      targetKey = "playlist";
+    } else {
+      endpoint = `/api/video-info?url=${encodeURIComponent(trimmed)}`;
+      targetKey = "video";
+    }
 
     try {
-      const res = await fetch(`/api/video-info?url=${encodeURIComponent(url.trim())}`);
+      const res = await fetch(endpoint);
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to fetch video info");
+        setError(data.error || "Failed to fetch info");
         return;
       }
 
-      setVideoInfo(data);
+      if (targetKey === "tiktok") setTiktokInfo(data);
+      else if (targetKey === "playlist") setPlaylistInfo(data);
+      else setVideoInfo(data);
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -138,12 +194,122 @@ export default function VideoDownloader() {
     }
   };
 
+  const handlePlatformChange = (platformId: string) => {
+    if (platformId === activePlatform) return;
+    setActivePlatform(platformId);
+    setUrl("");
+    setError("");
+    resetMedia();
+  };
+
+  const handleTikTokDownload = () => {
+    if (!tiktokInfo) return;
+    setTiktokDownloading(true);
+    const link = document.createElement("a");
+    link.href = `/api/tiktok-download?url=${encodeURIComponent(tiktokInfo.pageUrl)}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => setTiktokDownloading(false), 8000);
+  };
+
   const handleDownload = (videoId: string, itag: number) => {
     setDownloadingItag(itag);
     const link = document.createElement("a");
     link.href = `/api/download?id=${videoId}&itag=${itag}`;
+    document.body.appendChild(link);
     link.click();
-    setTimeout(() => setDownloadingItag(null), 3000);
+    document.body.removeChild(link);
+    setTimeout(() => setDownloadingItag(null), 8000);
+  };
+
+  const handleDownloadBest = (videoId: string) => {
+    setDownloadingPlaylistId(videoId);
+    const link = document.createElement("a");
+    link.href = `/api/download?id=${videoId}&best=1`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => setDownloadingPlaylistId(null), 8000);
+  };
+
+  const handleSelectPlaylistVideo = async (videoId: string) => {
+    setLoadingVideoId(videoId);
+    setError("");
+    try {
+      const res = await fetch(
+        `/api/video-info?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${videoId}`)}`
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to fetch video info");
+        return;
+      }
+      setVideoInfo(data);
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoadingVideoId(null);
+    }
+  };
+
+  const handleBackToPlaylist = () => {
+    setVideoInfo(null);
+    setError("");
+  };
+
+  const sanitizeFilename = (s: string) =>
+    s.replace(/[^a-zA-Z0-9_\- ]/g, "").trim() || "video";
+
+  const handleDownloadAll = async () => {
+    if (!playlistInfo || bulkProgress) return;
+
+    bulkCancelRef.current = false;
+    const videos = playlistInfo.videos;
+    let failed = 0;
+
+    setBulkProgress({ current: 0, total: videos.length, title: "", failed: 0 });
+
+    for (let i = 0; i < videos.length; i++) {
+      if (bulkCancelRef.current) break;
+      const video = videos[i];
+
+      setBulkProgress({
+        current: i + 1,
+        total: videos.length,
+        title: video.title,
+        failed,
+      });
+
+      try {
+        const res = await fetch(`/api/download?id=${video.id}&best=1`);
+        if (!res.ok) {
+          failed++;
+          continue;
+        }
+        const blob = await res.blob();
+        if (bulkCancelRef.current) break;
+
+        const ext = blob.type.includes("webm") ? "webm" : "mp4";
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = `${sanitizeFilename(video.title)}.${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000);
+      } catch {
+        failed++;
+      }
+    }
+
+    setBulkProgress(null);
+    bulkCancelRef.current = false;
+  };
+
+  const handleCancelBulk = () => {
+    bulkCancelRef.current = true;
   };
 
   const muxedFormats = videoInfo ? getMuxedFormats(videoInfo.formats) : null;
@@ -189,7 +355,7 @@ export default function VideoDownloader() {
               return (
                 <button
                   key={p.id}
-                  onClick={() => p.active && setActivePlatform(p.id)}
+                  onClick={() => p.active && handlePlatformChange(p.id)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
                     activePlatform === p.id
                       ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
@@ -216,18 +382,24 @@ export default function VideoDownloader() {
               type="url"
               placeholder={
                 activePlatform === "youtube"
-                  ? "Paste YouTube URL here... (e.g. https://youtube.com/watch?v=...)"
-                  : "Coming soon..."
+                  ? "Paste YouTube video or playlist URL..."
+                  : activePlatform === "tiktok"
+                    ? "Paste TikTok video URL..."
+                    : "Coming soon..."
               }
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              disabled={activePlatform !== "youtube"}
+              disabled={activePlatform !== "youtube" && activePlatform !== "tiktok"}
               className="flex-1 h-12 bg-neutral-800/50 border-neutral-700 text-white placeholder:text-neutral-500 focus:border-red-500 focus:ring-red-500/20"
             />
             <Button
               onClick={handleSearch}
-              disabled={loading || !url.trim() || activePlatform !== "youtube"}
+              disabled={
+                loading ||
+                !url.trim() ||
+                (activePlatform !== "youtube" && activePlatform !== "tiktok")
+              }
               className="h-12 px-6 bg-red-600 hover:bg-red-700 text-white"
             >
               {loading ? (
@@ -260,17 +432,145 @@ export default function VideoDownloader() {
             </Card>
           )}
 
-          {/* Video Info */}
-          {videoInfo && (
+          {/* Playlist View */}
+          {playlistInfo && !videoInfo && (
             <div className="space-y-6 mt-8">
               <Card className="bg-neutral-900 border-neutral-800 overflow-hidden">
                 <CardContent className="p-0">
                   <div className="flex flex-col md:flex-row">
-                    <div className="relative md:w-80 flex-shrink-0">
-                      <img
+                    {playlistInfo.thumbnail && (
+                      <div className="relative md:w-80 flex-shrink-0 aspect-video md:aspect-auto md:h-auto">
+                        <Image
+                          src={playlistInfo.thumbnail}
+                          alt={playlistInfo.title}
+                          width={320}
+                          height={180}
+                          className="w-full h-full object-cover"
+                          unoptimized
+                        />
+                        <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                          <ListVideo className="h-3 w-3" />
+                          {playlistInfo.videoCount}
+                        </div>
+                      </div>
+                    )}
+                    <div className="p-5 flex-1 min-w-0 flex flex-col">
+                      <Badge className="bg-red-600/10 text-red-400 border-red-800 mb-2 w-fit">
+                        <ListVideo className="h-3 w-3 mr-1" />
+                        Playlist
+                      </Badge>
+                      <h3 className="text-lg font-semibold text-white line-clamp-2 mb-2">
+                        {playlistInfo.title}
+                      </h3>
+                      <p className="text-sm text-neutral-400 mb-1">
+                        {playlistInfo.author}
+                      </p>
+                      <p className="text-xs text-neutral-500 mb-4">
+                        {playlistInfo.videoCount} videos
+                      </p>
+                      <div className="mt-auto">
+                        {!bulkProgress ? (
+                          <Button
+                            onClick={handleDownloadAll}
+                            disabled={playlistInfo.videos.length === 0}
+                            className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
+                          >
+                            <PackageCheck className="h-4 w-4 mr-2" />
+                            Download All ({playlistInfo.videos.length})
+                          </Button>
+                        ) : (
+                          <div className="space-y-2 w-full">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-neutral-300 font-medium">
+                                Downloading {bulkProgress.current} / {bulkProgress.total}
+                                {bulkProgress.failed > 0 && (
+                                  <span className="text-red-400 ml-2">
+                                    ({bulkProgress.failed} failed)
+                                  </span>
+                                )}
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={handleCancelBulk}
+                                className="h-7 border-neutral-700 text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                              >
+                                <StopCircle className="h-3.5 w-3.5 mr-1" />
+                                Stop
+                              </Button>
+                            </div>
+                            <div className="h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-red-600 transition-all duration-300"
+                                style={{
+                                  width: `${(bulkProgress.current / bulkProgress.total) * 100}%`,
+                                }}
+                              />
+                            </div>
+                            <p className="text-xs text-neutral-500 truncate">
+                              {bulkProgress.title}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-neutral-900 border-neutral-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-neutral-300 flex items-center gap-2">
+                    <ListVideo className="h-4 w-4" />
+                    Videos in Playlist
+                    <Badge variant="outline" className="text-neutral-500 border-neutral-700 ml-auto">
+                      {playlistInfo.videos.length} videos
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <Separator className="bg-neutral-800" />
+                <CardContent className="p-3">
+                  <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+                    {playlistInfo.videos.map((video, idx) => (
+                      <PlaylistVideoRow
+                        key={video.id}
+                        video={video}
+                        index={idx + 1}
+                        isLoading={loadingVideoId === video.id}
+                        isDownloading={downloadingPlaylistId === video.id}
+                        onSelect={() => handleSelectPlaylistVideo(video.id)}
+                        onDownloadBest={() => handleDownloadBest(video.id)}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Video Info */}
+          {videoInfo && (
+            <div className="space-y-6 mt-8">
+              {playlistInfo && (
+                <Button
+                  onClick={handleBackToPlaylist}
+                  variant="outline"
+                  className="border-neutral-700 text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to playlist
+                </Button>
+              )}
+              <Card className="bg-neutral-900 border-neutral-800 overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="flex flex-col md:flex-row">
+                    <div className="relative md:w-80 flex-shrink-0 aspect-video md:aspect-auto md:h-auto">
+                      <Image
                         src={videoInfo.thumbnail}
                         alt={videoInfo.title}
-                        className="w-full h-full object-cover aspect-video md:aspect-auto"
+                        width={320}
+                        height={180}
+                        className="w-full h-full object-cover"
                       />
                       <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
                         {formatDuration(videoInfo.duration)}
@@ -316,11 +616,92 @@ export default function VideoDownloader() {
             </div>
           )}
 
+          {/* TikTok View */}
+          {tiktokInfo && (
+            <div className="mt-8">
+              <Card className="bg-neutral-900 border-neutral-800 overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="flex flex-col md:flex-row">
+                    {tiktokInfo.thumbnail && (
+                      <div className="relative md:w-72 flex-shrink-0 aspect-[9/16] md:aspect-auto md:h-auto bg-neutral-950">
+                        <Image
+                          src={tiktokInfo.thumbnail}
+                          alt={tiktokInfo.title}
+                          width={288}
+                          height={512}
+                          className="w-full h-full object-cover"
+                          unoptimized
+                        />
+                        {tiktokInfo.duration > 0 && (
+                          <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
+                            {formatDuration(tiktokInfo.duration)}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div className="p-5 flex-1 min-w-0 flex flex-col">
+                      <Badge className="bg-red-600/10 text-red-400 border-red-800 mb-3 w-fit">
+                        <Zap className="h-3 w-3 mr-1" />
+                        TikTok
+                      </Badge>
+                      <h3 className="text-base font-semibold text-white line-clamp-3 mb-2">
+                        {tiktokInfo.title}
+                      </h3>
+                      <p className="text-sm text-neutral-400 mb-3">
+                        {tiktokInfo.author}
+                      </p>
+                      <div className="flex flex-wrap gap-4 text-xs text-neutral-500 mb-4">
+                        {tiktokInfo.playCount > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Play className="h-3.5 w-3.5" />
+                            {formatViews(tiktokInfo.playCount)}
+                          </span>
+                        )}
+                        {tiktokInfo.likeCount > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Heart className="h-3.5 w-3.5" />
+                            {formatViews(tiktokInfo.likeCount)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-auto">
+                        <Button
+                          onClick={handleTikTokDownload}
+                          disabled={tiktokDownloading}
+                          className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
+                        >
+                          {tiktokDownloading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Preparing...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="h-4 w-4 mr-2" />
+                              Download (No Watermark)
+                            </>
+                          )}
+                        </Button>
+                        <p className="text-[11px] text-neutral-600 mt-2">
+                          Clean video — no TikTok tag or username overlay.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Empty State */}
-          {!videoInfo && !loading && !error && (
+          {!videoInfo && !playlistInfo && !tiktokInfo && !loading && !error && (
             <div className="text-center py-12 text-neutral-600">
               <CirclePlay className="h-14 w-14 mx-auto mb-3 opacity-20" />
-              <p className="text-base">Paste a video URL above to get started</p>
+              <p className="text-base">
+                {activePlatform === "tiktok"
+                  ? "Paste a TikTok video URL above to get started"
+                  : "Paste a video or playlist URL above to get started"}
+              </p>
             </div>
           )}
         </section>
@@ -576,5 +957,77 @@ function FormatSection({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function PlaylistVideoRow({
+  video,
+  index,
+  isLoading,
+  isDownloading,
+  onSelect,
+  onDownloadBest,
+}: {
+  video: PlaylistVideoItem;
+  index: number;
+  isLoading: boolean;
+  isDownloading: boolean;
+  onSelect: () => void;
+  onDownloadBest: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 p-2 rounded-lg bg-neutral-800/50 hover:bg-neutral-800 transition-colors">
+      <span className="text-xs text-neutral-500 w-6 text-right flex-shrink-0 tabular-nums">
+        {index}
+      </span>
+      <div className="relative w-24 h-14 flex-shrink-0 rounded overflow-hidden bg-neutral-900">
+        <Image
+          src={video.thumbnail}
+          alt={video.title}
+          width={96}
+          height={56}
+          className="w-full h-full object-cover"
+          unoptimized
+        />
+        {video.duration > 0 && (
+          <div className="absolute bottom-0.5 right-0.5 bg-black/80 text-white text-[10px] px-1 rounded">
+            {formatDuration(video.duration)}
+          </div>
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-white font-medium line-clamp-2 leading-snug">
+          {video.title}
+        </p>
+        <p className="text-xs text-neutral-500 mt-0.5 truncate">{video.author}</p>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-1.5 flex-shrink-0">
+        <Button
+          size="sm"
+          onClick={onSelect}
+          disabled={isLoading}
+          variant="outline"
+          className="border-neutral-700 text-neutral-300 hover:bg-neutral-700 hover:text-white text-xs h-8"
+        >
+          {isLoading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            "Formats"
+          )}
+        </Button>
+        <Button
+          size="sm"
+          onClick={onDownloadBest}
+          disabled={isDownloading}
+          className="bg-red-600 hover:bg-red-700 text-white text-xs h-8"
+        >
+          {isDownloading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Download className="h-3.5 w-3.5" />
+          )}
+        </Button>
+      </div>
+    </div>
   );
 }
