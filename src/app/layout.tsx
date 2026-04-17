@@ -13,11 +13,39 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DownloadHub - Free Video Downloader | YouTube, Facebook, Instagram, TikTok",
+  title:
+    "Free Online Video Downloader — YouTube & TikTok No Watermark | DownloadHub",
   description:
-    "Download videos from YouTube, Facebook, Instagram & TikTok for free. Fast, safe, and easy — no app needed. HD quality up to 1080p.",
-  keywords: ["video downloader", "youtube downloader", "facebook downloader", "instagram downloader", "tiktok downloader", "free", "online"],
+    "Download YouTube videos, playlists, and TikTok without watermark online for free. No app install, no signup. HD quality up to 1080p. Works on any device.",
+  keywords: [
+    "online youtube downloader",
+    "youtube video downloader free",
+    "youtube playlist downloader",
+    "tiktok downloader no watermark",
+    "tiktok download without watermark",
+    "download tiktok video no logo",
+    "free video downloader online",
+    "download youtube video no app",
+    "youtube to mp4 online",
+    "save tiktok without watermark",
+  ],
   authors: [{ name: "Rahib Khan", url: "mailto:rahibkhan.dev88@gmail.com" }],
+  openGraph: {
+    title: "DownloadHub — Free YouTube & TikTok Video Downloader Online",
+    description:
+      "Download YouTube videos, playlists, and TikTok without watermark. Free, fast, no app needed. HD quality on any device.",
+    type: "website",
+    siteName: "DownloadHub",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "DownloadHub — Free YouTube & TikTok Video Downloader",
+    description:
+      "Download YouTube videos & TikTok without watermark online. No app, no signup, HD quality.",
+  },
+  alternates: {
+    canonical: "https://yt-downloader-livid-xi.vercel.app",
+  },
 };
 
 export default function RootLayout({
