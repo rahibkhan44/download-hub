@@ -127,7 +127,15 @@ function isPlaylistUrl(url: string): boolean {
   );
 }
 
-export default function VideoDownloader() {
+export default function VideoDownloader({
+  initialPlatform = "youtube",
+  heroTitle,
+  heroSubtitle,
+}: {
+  initialPlatform?: "youtube" | "tiktok";
+  heroTitle?: React.ReactNode;
+  heroSubtitle?: string;
+} = {}) {
   const [url, setUrl] = useState("");
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [playlistInfo, setPlaylistInfo] = useState<PlaylistInfo | null>(null);
@@ -138,7 +146,7 @@ export default function VideoDownloader() {
   const [downloadingItag, setDownloadingItag] = useState<number | null>(null);
   const [downloadingPlaylistId, setDownloadingPlaylistId] = useState<string | null>(null);
   const [loadingVideoId, setLoadingVideoId] = useState<string | null>(null);
-  const [activePlatform, setActivePlatform] = useState("youtube");
+  const [activePlatform, setActivePlatform] = useState<string>(initialPlatform);
   const [bulkProgress, setBulkProgress] = useState<{
     current: number;
     total: number;
@@ -325,7 +333,7 @@ export default function VideoDownloader() {
               <CirclePlay className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">DownloadHub</h1>
+              <h1 className="text-xl font-bold text-white">Vidverse</h1>
               <p className="text-xs text-neutral-400">Video Downloader</p>
             </div>
           </div>
@@ -341,11 +349,16 @@ export default function VideoDownloader() {
         {/* Hero + Downloader Section */}
         <section id="downloader" className="container mx-auto px-4 pt-12 pb-16 max-w-4xl">
           <div className="text-center mb-8">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-3">
-              Download Videos <span className="text-red-500">Instantly</span>
-            </h2>
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
+              {heroTitle ?? (
+                <>
+                  YouTube & TikTok Video Downloader — <span className="text-red-500">No Watermark</span>
+                </>
+              )}
+            </h1>
             <p className="text-neutral-400 text-lg max-w-2xl mx-auto">
-              Free online video downloader. Save videos from YouTube, Facebook, Instagram & TikTok in HD quality.
+              {heroSubtitle ??
+                "Free online video downloader. Save YouTube videos and full playlists, download TikTok without watermark, all in HD quality — no app install, no signup."}
             </p>
           </div>
 
@@ -733,7 +746,7 @@ export default function VideoDownloader() {
         {/* Features Section */}
         <section id="features" className="container mx-auto px-4 py-16 max-w-5xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-2">Why Choose DownloadHub?</h2>
+            <h2 className="text-3xl font-bold text-white mb-2">Why Choose Vidverse?</h2>
             <p className="text-neutral-400">The simplest way to download videos from the internet.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -791,8 +804,8 @@ export default function VideoDownloader() {
           <div className="space-y-4">
             {[
               {
-                q: "Is DownloadHub free to use?",
-                a: "Yes, DownloadHub is completely free to use with no hidden charges or subscriptions.",
+                q: "Is Vidverse free to use?",
+                a: "Yes, Vidverse is completely free to use with no hidden charges or subscriptions.",
               },
               {
                 q: "What video qualities are supported?",
@@ -800,7 +813,7 @@ export default function VideoDownloader() {
               },
               {
                 q: "Do I need to install any software?",
-                a: "No installation required. DownloadHub works entirely in your browser on any device.",
+                a: "No installation required. Vidverse works entirely in your browser on any device.",
               },
               {
                 q: "Which platforms are supported?",
@@ -828,7 +841,7 @@ export default function VideoDownloader() {
                 <div className="bg-red-600 rounded-lg p-1.5">
                   <CirclePlay className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-white font-bold text-lg">DownloadHub</span>
+                <span className="text-white font-bold text-lg">Vidverse</span>
               </div>
               <p className="text-neutral-500 text-sm leading-relaxed">
                 Free online video downloader for YouTube, Facebook, Instagram & TikTok. Fast, safe, and easy to use.
@@ -839,8 +852,8 @@ export default function VideoDownloader() {
             <div>
               <h4 className="text-white font-semibold mb-3">Platforms</h4>
               <ul className="space-y-2 text-sm text-neutral-500">
-                <li><a href="#downloader" className="hover:text-white transition-colors">YouTube Downloader</a></li>
-                <li><a href="#downloader" className="hover:text-white transition-colors">TikTok Downloader</a></li>
+                <li><a href="/youtube-downloader" className="hover:text-white transition-colors">YouTube Downloader</a></li>
+                <li><a href="/tiktok-downloader" className="hover:text-white transition-colors">TikTok Downloader</a></li>
                 <li className="text-neutral-600">Facebook Downloader (Soon)</li>
                 <li className="text-neutral-600">Instagram Downloader (Soon)</li>
               </ul>
@@ -874,7 +887,7 @@ export default function VideoDownloader() {
           <Separator className="bg-neutral-800 mb-6" />
 
           <div className="flex flex-col md:flex-row items-center justify-between gap-2 text-xs text-neutral-600">
-            <p>&copy; {new Date().getFullYear()} DownloadHub. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Vidverse. All rights reserved.</p>
             <p>
               Developed with <span className="text-red-500">&hearts;</span> by{" "}
               <span className="text-neutral-400">Rahib Khan</span>

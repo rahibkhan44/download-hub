@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title:
-    "Free Online Video Downloader — YouTube & TikTok No Watermark | DownloadHub",
+    "Free Online Video Downloader — YouTube & TikTok No Watermark | Vidverse",
   description:
     "Download YouTube videos, playlists, and TikTok without watermark online for free. No app install, no signup. HD quality up to 1080p. Works on any device.",
   keywords: [
@@ -31,15 +31,15 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Rahib Khan", url: "mailto:rahibkhan.dev88@gmail.com" }],
   openGraph: {
-    title: "DownloadHub — Free YouTube & TikTok Video Downloader Online",
+    title: "Vidverse — Free YouTube & TikTok Video Downloader Online",
     description:
       "Download YouTube videos, playlists, and TikTok without watermark. Free, fast, no app needed. HD quality on any device.",
     type: "website",
-    siteName: "DownloadHub",
+    siteName: "Vidverse",
   },
   twitter: {
     card: "summary_large_image",
-    title: "DownloadHub — Free YouTube & TikTok Video Downloader",
+    title: "Vidverse — Free YouTube & TikTok Video Downloader",
     description:
       "Download YouTube videos & TikTok without watermark online. No app, no signup, HD quality.",
   },
@@ -53,7 +53,7 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "WebApplication",
-      name: "DownloadHub",
+      name: "Vidverse",
       url: "https://yt-downloader-livid-xi.vercel.app",
       description:
         "Download YouTube videos, playlists, and TikTok without watermark online for free. No app install, no signup.",
@@ -77,7 +77,7 @@ const jsonLd = {
           name: "How do I download a YouTube video for free?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Paste the YouTube video URL into DownloadHub, choose your preferred quality, and click Download. No signup or app install needed.",
+            text: "Paste the YouTube video URL into Vidverse, choose your preferred quality, and click Download. No signup or app install needed.",
           },
         },
         {
@@ -85,7 +85,7 @@ const jsonLd = {
           name: "Can I download TikTok videos without watermark?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Yes. DownloadHub downloads TikTok videos without the watermark or username overlay, giving you a clean video file.",
+            text: "Yes. Vidverse downloads TikTok videos without the watermark or username overlay, giving you a clean video file.",
           },
         },
         {
@@ -93,15 +93,15 @@ const jsonLd = {
           name: "Can I download an entire YouTube playlist?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Yes. Paste a YouTube playlist URL and DownloadHub will list all videos. You can download them individually or use the Download All button.",
+            text: "Yes. Paste a YouTube playlist URL and Vidverse will list all videos. You can download them individually or use the Download All button.",
           },
         },
         {
           "@type": "Question",
-          name: "Is DownloadHub free?",
+          name: "Is Vidverse free?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Yes, DownloadHub is completely free with no hidden charges, no ads, and no signup required.",
+            text: "Yes, Vidverse is completely free with no hidden charges, no ads, and no signup required.",
           },
         },
       ],
@@ -118,7 +118,7 @@ const jsonLd = {
         {
           "@type": "HowToStep",
           name: "Paste and search",
-          text: "Paste the URL into DownloadHub and click the search button.",
+          text: "Paste the URL into Vidverse and click the search button.",
         },
         {
           "@type": "HowToStep",
